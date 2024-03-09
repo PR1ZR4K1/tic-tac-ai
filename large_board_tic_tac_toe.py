@@ -16,7 +16,8 @@ PLEASE READ THE COMMENTS BELOW AND THE HOMEWORK DESCRIPTION VERY CAREFULLY BEFOR
 """
 import pygame
 import numpy as np
-from GameStatus_5120 import GameStatus
+# from GameStatus_5120 import GameStatus
+from Text import Text
 from multiAgents import minimax, negamax
 import sys
 import random
@@ -36,37 +37,93 @@ class RandomBoardTicTacToe:
 
         # Grid Size
         self.GRID_SIZE = 4
-        self. OFFSET = 5
+        self.OFFSET = 5
 
         self.CIRCLE_COLOR = (140, 146, 172)
         self.CROSS_COLOR = (140, 146, 172)
 
         # This sets the WIDTH and HEIGHT of each grid location
-        self.WIDTH = self.size[0]/self.GRID_SIZE - self.OFFSET
-        self.HEIGHT = self.size[1]/self.GRID_SIZE - self.OFFSET
+        self.WIDTH = self.size[0]/self.GRID_SIZE - self.OFFSET  # 150
+        self.HEIGHT = self.size[1]/self.GRID_SIZE - self.OFFSET  # 150
 
         # This sets the margin between each cell
         self.MARGIN = 5
+        self.FONT_SIZE = 50
+        self.running = True
+
+        pygame.init()
+
+        self.menu_options = [Text(label, x_pos=self.width/2-20, y_pos=y_pos,
+                                  font_size=self.FONT_SIZE, font_color=self.WHITE)
+                             for label, y_pos in [
+            ('Play', 150),
+            ('Options', 300),
+            ('Exit', 450)
+        ]]
+
+        self.menu_options[0].setSelected(True)
+
+        self.screen = pygame.display.set_mode(self.size)
 
         # Initialize pygame
-        pygame.init()
         self.game_reset()
 
-    def draw_game(self):
+    def quit(self):
+        self.running = False
+        pygame.quit()
+
+    # change the currently selected option and return new selection value
+    # direction is -1 for up and +1 for down
+    def change_selection(self, current_selection, direction: int):
+        self.menu_options[current_selection].setSelected(
+            False)
+        self.menu_options[current_selection].setBackgroundColor(
+            self.BLACK)
+        new_selection = (
+            current_selection + direction) % len(self.menu_options)
+        self.menu_options[new_selection].setSelected(
+            True)
+
+        return new_selection
+
+    def main_menu(self):
 
         # Create a 2 dimensional array using the column and row variables
 
-        pygame.init()
-        self.screen = pygame.display.set_mode(self.size)
-        pygame.display.set_caption("Tic Tac Toe Random Grid")
+        pygame.display.set_caption("Tic Tac Toe Menu")
         self.screen.fill(self.BLACK)
-        # Draw the grid
 
-        """
-        YOUR CODE HERE TO DRAW THE GRID OTHER CONTROLS AS PART OF THE GUI
-        """
+        # Draw the menu
+
+        for obj in self.menu_options:
+            if (obj.isSelected):
+                pygame.draw.rect(self.screen, self.RED,
+                                 obj.rectangle_rect, border_radius=2)
+                obj.setBackgroundColor(self.RED)
+
+            self.screen.blit(
+                obj.name, obj.rect)
 
         pygame.display.update()
+
+    def options_menu(self):
+        pygame.init()
+
+        while self.running:
+            pygame.display.set_caption("Tic Tac Toe Options")
+            self.screen.fill(self.BLACK)
+            pygame.display.update()
+
+            for event in pygame.event.get():
+
+                # key events
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.quit()
+
+                # exit button event
+                if event.type == pygame.QUIT:
+                    self.quit()
 
     def change_turn(self):
 
@@ -112,7 +169,7 @@ class RandomBoardTicTacToe:
         """ USE self.game_state.get_scores(terminal) HERE TO COMPUTE AND DISPLAY THE FINAL SCORES """
 
     def game_reset(self):
-        self.draw_game()
+        self.main_menu()
         """
         YOUR CODE HERE TO RESET THE BOARD TO VALUE 0 FOR ALL CELLS AND CREATE A NEW GAME STATE WITH NEWLY INITIALIZED
         BOARD STATE
@@ -159,10 +216,79 @@ class RandomBoardTicTacToe:
         pygame.quit()
 
 
-tictactoegame = RandomBoardTicTacToe()
 """
 YOUR CODE HERE TO SELECT THE OPTIONS VIA THE GUI CALLED FROM THE ABOVE LINE
 AFTER THE ABOVE LINE, THE USER SHOULD SELECT THE OPTIONS AND START THE GAME. 
 YOUR FUNCTION PLAY_GAME SHOULD THEN BE CALLED WITH THE RIGHT OPTIONS AS SOON
 AS THE USER STARTS THE GAME
 """
+
+
+def main():
+    tictactoegame = RandomBoardTicTacToe()
+    pygame.init()
+    current_selection = 0
+
+    while tictactoegame.running:
+
+        # draw our first screen
+        tictactoegame.main_menu()
+
+        # handle player events
+        for event in pygame.event.get():
+
+            # mouse events
+            if event.type == pygame.MOUSEBUTTONUP:
+                pos = pygame.mouse.get_pos()
+
+                # iterate through available objects
+                for obj in tictactoegame.menu_options:
+
+                    # if one of them was clicked
+                    if obj.rect.collidepoint(pos):
+                        # determine which one
+
+                        if obj.text.lower() == 'play':
+                            print('play the game!')
+
+                            # check if the text item has not already been selected
+                            if not obj.isSelected:
+                                # select it
+                                obj.setBackgroundColor(tictactoegame.RED)
+                                obj.setSelected(True)
+
+                        elif obj.text.lower() == 'options':
+                            print('options!')
+                            tictactoegame.options_menu()
+                        elif obj.text.lower() == 'exit':
+                            print('exiting!')
+                            tictactoegame.quit()
+
+            # key events
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    tictactoegame.quit()
+                elif event.key == pygame.K_UP:
+                    current_selection = tictactoegame.change_selection(
+                        current_selection=current_selection, direction=-1)
+                elif event.key == pygame.K_DOWN:
+                    current_selection = tictactoegame.change_selection(
+                        current_selection=current_selection, direction=1)
+                elif event.key == pygame.K_RETURN:
+                    # play
+                    if current_selection == 0:
+                        print('play the game!')
+                    elif current_selection == 1:
+                        print('options!')
+                        tictactoegame.options_menu()
+                    elif current_selection == 2:
+                        print('exiting!')
+                        tictactoegame.quit()
+
+            # exit button event
+            if event.type == pygame.QUIT:
+                tictactoegame.quit()
+
+
+if __name__ == '__main__':
+    main()

@@ -17,6 +17,10 @@ class GameStatus:
                 THEN YOU SHOULD ALSO RETURN THE WINNER OF THE GAME BY CHECKING THE SCORES FOR EACH PLAYER 
         """
 
+        for row in self.board_state:
+            for column in row:
+                pass
+
     def get_scores(self, terminal):
         """
 [
@@ -39,7 +43,8 @@ NEGATIVE (AI PLAYER WINS), OR 0 (DRAW)
         check_point = 3 if terminal else 2
 
         for row in range(rows):
-            if self.board_state[row][0]:
+            for col in range(cols):
+
                 if self.board_state[row][0] == 'x':
                     return 10
                 elif self.board_state[row][0] == 'o':
