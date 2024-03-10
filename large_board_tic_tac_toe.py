@@ -36,15 +36,15 @@ class RandomBoardTicTacToe:
         self.RED = (255, 0, 0)
 
         # Grid Variables
-        self.GRID_SQUARES = 50
+        self.GRID_SQUARES = 3
         self.GRID_LINES = self.GRID_SQUARES - 1
+        self.new_size_str = str(self.GRID_SQUARES)
         # border radius for line
         self.GRID_LINE_BR = 2
         self.GRID_LINE_WIDTH = 4
         # total line width
         self.GRID_LINE_TW = (self.GRID_LINE_BR + self.GRID_LINE_WIDTH)
         self.GRID_OFFSET = 45
-
         # size of each square
         """
         Explained:
@@ -69,6 +69,7 @@ class RandomBoardTicTacToe:
 
         pygame.init()
 
+        # main menu options
         self.menu_options = [
             Text("Play", x_pos=self.width/2-20, y_pos=150,
                  font_size=self.FONT_SIZE, font_color=self.WHITE),
@@ -79,34 +80,48 @@ class RandomBoardTicTacToe:
         ]
         self.menu_options[0].setSelected(True)
 
-        # options menu text
+
+        # options-menu text
         self.options_menu_items = [
-            Text("Game Mode: ", x_pos=self.width/2, y_pos=50,
-                 font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
-            Text("Player Symbol: ", x_pos=self.width/2, y_pos=175,
-                 font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
-            Text("Board Size: ", x_pos=self.width/2, y_pos=300,
-                 font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
+            Text("Game Mode: ", x_pos=self.width/2, y_pos=30,
+                 font_size=self.OPTIONS_SIZE + 10, font_color=self.WHITE, font_file='basic.ttf', underline=True),
+            Text("Player Symbol: ", x_pos=self.width/2, y_pos=190,
+                 font_size=self.OPTIONS_SIZE + 10, font_color=self.WHITE, font_file='basic.ttf', underline=True),
+            Text("Board Size: ", x_pos=self.width/2, y_pos=350,
+                 font_size=self.OPTIONS_SIZE + 10, font_color=self.WHITE, font_file='basic.ttf', underline=True),
             Text("Apply Changes", x_pos=self.width/2, y_pos=500,
-                 font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
+                 font_size=self.OPTIONS_SIZE + 15, font_color=self.WHITE, font_file='basic.ttf'),
         ]
         self.options_menu_items[3].setSelected(True)
 
+        # Game-mode options in options-menu
         self.game_mode_options = [
-            Text("Human vs Human", x_pos=self.width/2, y_pos=75,
+            Text("Human vs Human", x_pos=self.width/2, y_pos=85,
                  font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
-            Text("Human vs Computer", x_pos=self.width/2, y_pos=100,
+            Text("Human vs Computer", x_pos=self.width/2 + 16, y_pos=135,
                  font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
         ]
-        self.selected_game_mode = 0
+        self.selected_game_mode = 0 #set Human vs Human to be default
 
+        # player-symbol options in options-menu
         self.player_symbol_options = [
-            Text("Nought (0)", x_pos=self.width/2, y_pos=200,
+            Text("Cross (X)", x_pos=self.width/2, y_pos=245,
                  font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
-            Text("Cross (X)", x_pos=self.width/2, y_pos=225,
+            Text("Nought (O)", x_pos=self.width/2, y_pos=295,
                  font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
         ]
-        self.selected_player_symbol = 0
+        self.selected_player_symbol = 0 #set cross to be default
+
+        # set board size in options menu
+        self.board_size_option = [
+            Text("Size: ",x_pos=self.width/2 - 20, y_pos=405,
+                 font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
+            Text("3", x_pos=(self.width/2) + 40, y_pos=405,
+                    font_size=self.OPTIONS_SIZE, font_color=self.BLACK, bg_color=(255,255,255), font_file='basic.ttf')
+        ]
+        self.is_typing_size = False #make sure key clicks dont do anything unless in type box
+        
+        
 
         self.screen = pygame.display.set_mode(self.size)
 
@@ -160,38 +175,111 @@ class RandomBoardTicTacToe:
             pygame.display.set_caption("Tic Tac Toe Options")
             self.screen.fill(self.BLACK)
 
+            # Displays titles and Apply button
             for obj in self.options_menu_items:
                 if (obj.isSelected):
                     pygame.draw.rect(self.screen, self.RED,
                                      obj.rectangle_rect, border_radius=1)
                     obj.setBackgroundColor(self.RED)
+                    obj.hitbox = obj.get_hitbox(10,5)
+                    #pygame.draw.rect(self.screen, self.GREEN, obj.hitbox, 1) #draws the hitbox
                 self.screen.blit(obj.name, obj.rect)
 
-            # for ob
+            # Display Game mode options (Human vs. Human OR Human vs. Computer)
+            for obj in self.game_mode_options:
+                self.screen.blit(obj.name, obj.rect)
 
+            # Display player symbol options (Nought (0) OR Cross (X))
+            for obj in self.player_symbol_options:
+                self.screen.blit(obj.name, obj.rect)
+
+            # Display Size text
+            for obj in self.board_size_option:
+                self.screen.blit(obj.name, obj.rect)
+            
+            # Draw the entry box
+            entry_box_pos = (self.width/2 + 15, 390)  # Adjust the position as needed
+            entry_box_size = (50, 35)  # Width, Height
+            self.entry_box_rect = pygame.Rect(entry_box_pos, entry_box_size)
+            pygame.draw.rect(self.screen, self.WHITE, self.entry_box_rect, 0)
+
+            # Display Size text
+            for obj in self.board_size_option:
+                self.screen.blit(obj.name, obj.rect)
+
+
+            # Display radio buttons and hitboxes for Game Mode
             for button, option in enumerate(self.game_mode_options):
                 mode_circle_center = (self.width/2-120, option.y_pos)
+                option.hitbox = option.get_hitbox(50, 20, -15)
+                #pygame.draw.rect(self.screen, self.RED, option.hitbox, 1) #draws the hitbox
 
                 pygame.draw.circle(self.screen, self.WHITE,
-                                   mode_circle_center, 6, 2)
+                                   mode_circle_center, 10, 2)
 
+                # fills in circle for whichever option is selected
                 if button == self.selected_game_mode:
                     pygame.draw.circle(
-                        self.screen, self.WHITE, mode_circle_center, 6)
+                        self.screen, self.WHITE, mode_circle_center, 5)
 
+            # Display radio buttons and hitboxes for Player Symbol
             for button, option in enumerate(self.player_symbol_options):
                 symbol_circle_center = (self.width/2-120, option.y_pos)
+                option.hitbox = option.get_hitbox(130,20, -15)
+                #pygame.draw.rect(self.screen, self.RED, option.hitbox, 1)
 
                 pygame.draw.circle(self.screen, self.WHITE,
-                                   symbol_circle_center, 6, 2)
+                                   symbol_circle_center, 10, 2)
 
                 if button == self.selected_player_symbol:
                     pygame.draw.circle(
-                        self.screen, self.WHITE, symbol_circle_center, 6)
+                        self.screen, self.WHITE, symbol_circle_center, 5)
 
             pygame.display.update()
 
             for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_pos = event.pos
+
+                    # Check for game mode selection
+                    for i, option in enumerate(self.game_mode_options):
+                        if option.hitbox.collidepoint(mouse_pos):
+                            self.selected_game_mode = i  # Update the selected game mode index
+                            break  # Break after selection to avoid multiple selections
+
+                    # Check for game mode selection
+                    for i, option in enumerate(self.player_symbol_options):
+                        if option.hitbox.collidepoint(mouse_pos):
+                            self.selected_player_symbol = i  # Update the selected game mode index
+                            break  # Break after selection to avoid multiple selections
+
+                    # Check if they click on grid number
+                    if self.entry_box_rect.collidepoint(mouse_pos):
+                        self.is_typing_size = True
+                    else:
+                        self.is_typing_size = False
+
+                    # APPLY CHANGES
+                    if self.options_menu_items[3].hitbox.collidepoint(mouse_pos):
+                        new_grid_size = int(self.new_size_str)
+
+                        if(new_grid_size < 3):
+                            print("Invalid Board State")
+                        else:
+                            self.GRID_SQUARES = new_grid_size
+                            print(self.GRID_SQUARES)
+                            done = True
+
+                elif event.type == pygame.KEYDOWN: 
+                    if self.is_typing_size == True:
+                        if event.unicode.isnumeric():
+                            self.new_size_str += event.unicode
+                            self.board_size_option[1].update_text(self.new_size_str)
+                            
+                        elif event.key == pygame.K_BACKSPACE:
+                            self.new_size_str = self.new_size_str[:-1]  # Remove the last character
+                            self.board_size_option[1].update_text(self.new_size_str)
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.quit()
