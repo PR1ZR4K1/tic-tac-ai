@@ -1,40 +1,43 @@
 from GameStatus_5120 import GameStatus
 
+# 3x3 tic-tac-toe board
 
-def minimax(game_state: GameStatus, depth: int, maximizingPlayer: bool, alpha=float('-inf'), beta=float('inf')):
+
+def minimax(game_state, depth, maximizingPlayer, alpha=float('-inf'), beta=float('inf')):
     best_move = None
-
     terminal = game_state.is_terminal()
-    if (depth == 0) or (terminal):
-        newScores = game_state.get_scores(terminal)
-        return newScores, best_move
+    if depth == 0 or terminal:
+        return game_state.get_score(terminal), None
 
     if maximizingPlayer:
-        bestVal = float('-inf')
+        value = float('-inf')
         for move in game_state.get_moves():
-            value, foundMove = minimax(game_state, depth+1, False, alpha, beta)
-            best_move = foundMove
+            state = game_state.get_new_state(move)
+            eval, n = minimax(state, depth - 1, False, alpha, beta)
+            print(eval, n)
 
-            bestVal = max(bestVal, value)
-            alpha = max(alpha, bestVal)
-
-            if beta <= alpha:
+            if eval > value:
+                value = eval
                 best_move = move
+            alpha = max(alpha, value)
+            if beta <= alpha:
                 break
-        return bestVal, best_move
     else:
-        bestVal = float('inf')
+        value = float('inf')
         for move in game_state.get_moves():
-            value, foundMove = minimax(game_state, depth+1, False, alpha, beta)
-            best_move = foundMove
-
-            bestVal = max(bestVal, value)
-            alpha = max(alpha, bestVal)
-
-            if beta <= alpha:
+            state = game_state.get_new_state(move)
+            eval, n = minimax(state, depth - 1, True, alpha, beta)
+            if eval < value:
+                value = eval
                 best_move = move
+            beta = min(beta, value)
+            if beta <= alpha:
+                print("Pruning")
                 break
-        return bestVal, best_move
+
+    print(value, best_move)
+
+    return value, best_move
 
     """
     YOUR CODE HERE TO FIRST CHECK WHICH PLAYER HAS CALLED THIS FUNCTION (MAXIMIZING OR MINIMIZING PLAYER)
@@ -44,8 +47,6 @@ def minimax(game_state: GameStatus, depth: int, maximizingPlayer: bool, alpha=fl
     
     THE LINE TO RETURN THESE TWO IS COMMENTED BELOW WHICH YOU CAN USE
     """
-
-    # return value, best_move
 
 
 def negamax(game_status: GameStatus, depth: int, turn_multiplier: int, alpha=float('-inf'), beta=float('inf')):
@@ -72,6 +73,8 @@ def negamax(game_status: GameStatus, depth: int, turn_multiplier: int, alpha=flo
     best_move = float('-inf')
 
     for child in child_nodes:
+        state = game_status.get_new_state()
+
         value = -negamax(game_status=game_status, depth=depth-1,
                          alpha=-alpha, beta=-beta, turn_multiplier=-turn_multiplier)
         best_move = max(best_move, value)
@@ -80,3 +83,14 @@ def negamax(game_status: GameStatus, depth: int, turn_multiplier: int, alpha=flo
             break
 
     return value, best_move
+
+
+board_state = [
+    ["x", "_", "o"],
+    ["_", "_", "_"],
+    ["o", "_", "x"]
+]
+
+state = GameStatus(board_state, False)
+
+print(minimax(state, 999993939, True))

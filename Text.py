@@ -3,9 +3,9 @@ import pygame
 
 class Text:
 
-    def __init__(self, text, x_pos, y_pos, font_size, font_color, bg_color=(0, 0, 0), padding=3, isSelected=False):
+    def __init__(self, text, x_pos, y_pos, font_size, font_color, bg_color=(0, 0, 0), padding=3, isSelected=False, font_file='coolfont.ttf'):
 
-        self.font = pygame.font.Font('coolfont.ttf', font_size)
+        self.font = pygame.font.Font(font_file, font_size)
 
         self.text = text
         self.x_pos = x_pos
