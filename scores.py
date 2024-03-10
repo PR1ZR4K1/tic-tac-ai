@@ -58,10 +58,10 @@ def get_moves(self):
     return [(x, y) for x, row in enumerate(self.board_state) for y, col in enumerate(row) if col == "_"]
 
 
-def get_negamax_scores(terminal, board_state):
+def get_negamax_score(terminal, board_state):
     rows = len(board_state)
     cols = len(board_state[0])
-    scores = 0
+    total_score = 0
     check_point = 3 if terminal else 2
 
     # Adjusting score increments for demonstration purposes
@@ -71,26 +71,23 @@ def get_negamax_scores(terminal, board_state):
     score_decrement_for_ai = -100
 
     for row in range(rows):
-        scores += evaluate_negamax_line(
+        total_score += evaluate_negamax_line(
             board_state[row], check_point, score_increment_for_human, score_decrement_for_ai)
 
     for col in range(cols):
-        scores += evaluate_negamax_line([board_state[row][col] for row in range(
+        total_score += evaluate_negamax_line([board_state[row][col] for row in range(
             rows)], check_point, score_increment_for_human, score_decrement_for_ai)
 
-    scores += evaluate_negamax_line([board_state[i][i] for i in range(
+    total_score += evaluate_negamax_line([board_state[i][i] for i in range(
         rows)], check_point, score_increment_for_human, score_decrement_for_ai)
-    scores += evaluate_negamax_line([board_state[i][rows-i-1] for i in range(
+    total_score += evaluate_negamax_line([board_state[i][rows-i-1] for i in range(
         rows)], check_point, score_increment_for_human, score_decrement_for_ai)
 
-    return scores
+    return total_score
 
 
 def evaluate_negamax_line(elements, check_point, score_increment_for_human, score_decrement_for_ai):
-    """
-    Adjusted evaluate_line function to consider potential wins and strategic positions,
-    rather than just completed wins.
-    """
+
     score = 0
     x_count = elements.count("x")
     o_count = elements.count("o")
@@ -101,9 +98,9 @@ def evaluate_negamax_line(elements, check_point, score_increment_for_human, scor
         score += (x_count / check_point) * score_increment_for_human
     if o_count > 0 and x_count == 0:  # Potential for "o" to win
         score += (o_count / check_point) * score_decrement_for_ai
-    if x_count == check_point - 1 and empty_count == 1:  # Immediate win opportunity for "x"
+    if x_count == check_point and empty_count == 1:  # Immediate win opportunity for "x"
         score += 2 * score_increment_for_human
-    if o_count == check_point - 1 and empty_count == 1:  # Immediate block/win opportunity for "o"
+    if o_count == check_point and empty_count == 1:  # Immediate block/win opportunity for "o"
         score += 2 * score_decrement_for_ai
 
     return score
@@ -115,7 +112,7 @@ def evaluate_negamax_line(elements, check_point, score_increment_for_human, scor
 def negamax(game_status: GameStatus, depth: int, turn_multiplier: int, alpha=float('-inf'), beta=float('inf')):
     terminal = game_status.is_terminal()
     if (depth == 0) or (terminal):
-        scores = get_negamax_scores(
+        scores = get_negamax_score(
             terminal, game_status.board_state)
         return scores * turn_multiplier, None
 
@@ -137,6 +134,7 @@ def negamax(game_status: GameStatus, depth: int, turn_multiplier: int, alpha=flo
 
     for move in game_status.get_moves():
         state = game_status.get_new_state(move)
+        print(state.board_state)
 
         # Negate the evaluated score and flip alpha and beta for the recursive call
         eval, _ = negamax(state, depth - 1, -turn_multiplier, -beta, -alpha)
@@ -148,19 +146,21 @@ def negamax(game_status: GameStatus, depth: int, turn_multiplier: int, alpha=flo
 
         alpha = max(alpha, eval)
         if alpha >= beta:
+            print('Pruning')
             break
+    print(f'{best_value}, {best_move} yurrr')
 
     return best_value, best_move
 
 
 board_state = [
-    ["o", "_", "x"],
+    ["x", "_", "o"],
     ["_", "_", "_"],
-    ["x", "_", "o"]
+    ["o", "_", "x"]
 ]
 
 state = GameStatus(board_state, False)
-# print(state.get_score(False))
-print(negamax(state, depth=9, turn_multiplier=1))
+print(get_negamax_score(False, state.board_state))
+# print(negamax(state, depth=100, turn_multiplier=-1))
 
 # print(negamax(state, 999, True))

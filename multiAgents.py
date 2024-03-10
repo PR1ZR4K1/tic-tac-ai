@@ -1,3 +1,4 @@
+
 from GameStatus_5120 import GameStatus
 
 # 3x3 tic-tac-toe board
@@ -19,9 +20,12 @@ def minimax(game_state, depth, maximizingPlayer, alpha=float('-inf'), beta=float
             if eval > value:
                 value = eval
                 best_move = move
-            alpha = max(alpha, value)
-            if beta <= alpha:
+
+            if value >= beta:
                 break
+
+            alpha = max(alpha, value)
+
     else:
         value = float('inf')
         for move in game_state.get_moves():
@@ -30,10 +34,11 @@ def minimax(game_state, depth, maximizingPlayer, alpha=float('-inf'), beta=float
             if eval < value:
                 value = eval
                 best_move = move
-            beta = min(beta, value)
-            if beta <= alpha:
+
+            if value <= alpha:
                 print("Pruning")
                 break
+            beta = min(beta, value)
 
     print(value, best_move)
 
@@ -93,4 +98,4 @@ board_state = [
 
 state = GameStatus(board_state, False)
 
-print(minimax(state, 999993939, True))
+print(minimax(state, 9, True))
