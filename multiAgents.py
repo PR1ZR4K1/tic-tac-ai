@@ -1,64 +1,111 @@
 
-from GameStatus_5120 import GameStatus
-
-# 3x3 tic-tac-toe board
+from GameStatus import GameStatus
 
 
-def minimax(game_state, depth, maximizingPlayer, alpha=float('-inf'), beta=float('inf')):
-    best_move = None
-    terminal = game_state.is_terminal()
+def max_value(game_state: GameStatus, alpha, beta):
+    if game_state.is_terminal():
+        return game_state.get_score(True)
+    print(game_state.get_moves())
+
+    v = float('-inf')
+    for move in game_state.get_moves():
+        v = max(v, min_value(game_state.get_new_state(move), alpha, beta))
+        alpha = max(alpha, v)
+        if v >= beta:
+            return v
+    return v
+
+
+def min_value(game_state: GameStatus, alpha, beta):
+    if game_state.is_terminal():
+        return game_state.get_score(True)
+    print(game_state.get_moves())
+
+    v = float('inf')
+    for move in game_state.get_moves():
+        v = min(v, max_value(game_state.get_new_state(move), alpha, beta))
+        beta = min(beta, v)
+        if v <= alpha:
+            return v
+    return v
+
+
+def super_minimax(game_state: GameStatus, depth: int, maximizingPlayer: bool, alpha=float('-inf'), beta=float('inf')):
+    terminal = game_state.is_terminal(
+    )
+
     if depth == 0 or terminal:
-        return game_state.get_score(terminal), None
+        score = game_state.get_score(terminal)
+        return score, None
 
     if maximizingPlayer:
-        value = float('-inf')
+        v = float('-inf')
+
+        best_move = None
         for move in game_state.get_moves():
             state = game_state.get_new_state(move)
-            eval, n = minimax(state, depth - 1, False, alpha, beta)
-            print(eval, n)
-
-            if eval > value:
-                value = eval
+            new_v = min_value(state, alpha, beta)
+            if new_v > v:
+                v = new_v
                 best_move = move
-
-            if value >= beta:
-                break
-
-            alpha = max(alpha, value)
-
+        return v, best_move
     else:
-        value = float('inf')
+        v = float('inf')
+        best_move = None
         for move in game_state.get_moves():
             state = game_state.get_new_state(move)
-            eval, n = minimax(state, depth - 1, True, alpha, beta)
-            if eval < value:
-                value = eval
+            new_v = max_value(state, alpha, beta)
+            if new_v < v:
+                v = new_v
                 best_move = move
+        return v, best_move
 
-            if value <= alpha:
-                print("Pruning")
+
+def minimax(game_state: GameStatus, depth: int, maximizingPlayer: bool, alpha=float('-inf'), beta=float('inf')):
+    terminal = game_state.is_terminal()
+    # print(game_state.is_terminal())
+    if depth == 0 or terminal:
+        # Assuming this returns a single score
+        score = game_state.get_score(terminal)
+        return score, None  # No best move at leaf nodes or terminal states
+
+    if maximizingPlayer:
+        maxEval = float('-inf')
+        best_move = None
+        for move in game_state.get_moves():
+            state = game_state.get_new_state(move)
+            eval, _ = minimax(state, depth - 1, False, alpha, beta)
+            if eval > maxEval:
+                maxEval = eval
+                best_move = move
+            alpha = max(alpha, eval)
+            if beta <= alpha:
+                # print('pruning')
                 break
-            beta = min(beta, value)
-
-    print(value, best_move)
-
-    return value, best_move
-
-    """
-    YOUR CODE HERE TO FIRST CHECK WHICH PLAYER HAS CALLED THIS FUNCTION (MAXIMIZING OR MINIMIZING PLAYER)
-    YOU SHOULD THEN IMPLEMENT MINIMAX WITH ALPHA-BETA PRUNING AND RETURN THE FOLLOWING TWO ITEMS
-    1. VALUE
-    2. BEST_MOVE
-    
-    THE LINE TO RETURN THESE TWO IS COMMENTED BELOW WHICH YOU CAN USE
-    """
+        return maxEval, best_move
+    else:
+        minEval = float('inf')
+        best_move = None
+        for move in game_state.get_moves():
+            state = game_state.get_new_state(move)
+            eval, _ = minimax(state, depth - 1, True, alpha, beta)
+            if eval < minEval:
+                minEval = eval
+                best_move = move
+            beta = min(beta, eval)
+            if beta <= alpha:
+                # print('pruning')
+                break
+        return minEval, best_move
 
 
 def negamax(game_status: GameStatus, depth: int, turn_multiplier: int, alpha=float('-inf'), beta=float('inf')):
     terminal = game_status.is_terminal()
     if (depth == 0) or (terminal):
-        scores = game_status.get_negamax_scores(terminal)
-        return scores, None
+        scores = game_status.get_score(terminal)
+
+        # Negate the score since negamax returns score from the perspective of the next player
+        return scores * turn_multiplier, None
 
     """
     YOUR CODE HERE TO CALL NEGAMAX FUNCTION. REMEMBER THE RETURN OF THE NEGAMAX SHOULD BE THE OPPOSITE OF THE CALLING
@@ -73,29 +120,54 @@ def negamax(game_status: GameStatus, depth: int, turn_multiplier: int, alpha=flo
     
     """
 
-    child_nodes = game_status.get_moves()
+    best_value = float('-inf')
+    best_move = None
 
-    best_move = float('-inf')
+    for move in game_status.get_moves():
 
-    for child in child_nodes:
-        state = game_status.get_new_state()
+        # print('before\n', [print(row) for row in game_status.board_state])
 
-        value = -negamax(game_status=game_status, depth=depth-1,
-                         alpha=-alpha, beta=-beta, turn_multiplier=-turn_multiplier)
-        best_move = max(best_move, value)
-        alpha = max(alpha, value)
+        state = game_status.get_new_state(move)
+        # print('after:\n', [print(row) for row in state.board_state])
+
+        # print(f'Available Moves: {game_status.get_moves()}')
+
+        # print('\n-------------------\n')
+
+        # Negate the evaluated score and flip alpha and beta for the recursive call
+        eval = -negamax(state, depth - 1, -
+                        turn_multiplier, -beta, -alpha)[0]
+
+        if eval > best_value:
+            best_value = eval
+            best_move = move
+
+        alpha = max(alpha, best_value)
         if alpha >= beta:
             break
+    # print(f'{best_value}, {best_move} yurrr')
 
-    return value, best_move
+    return best_value, best_move
 
+
+# empty 5x5 board of just diagonals
+board_state = [
+    ["_", "_", "_", "_", "_"],
+    ["_", "_", "_", "_", "_"],
+    ["_", "_", "x", "_", "_"],
+    ["_", "_", "_", "_", "_"],
+    ["_", "_", "_", "_", "_"]
+]
 
 board_state = [
-    ["x", "_", "o"],
-    ["_", "_", "_"],
-    ["o", "_", "x"]
+    ["x", "o", "x"],
+    ["x", "o", "_"],
+    ["_", "_", "o"]
 ]
 
 state = GameStatus(board_state, False)
 
+
 print(minimax(state, 9, True))
+print(negamax(state, 9, 1))
+# print(state.get_score(False))
