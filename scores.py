@@ -158,69 +158,93 @@ def negamax(game_status: GameStatus, depth: int, turn_multiplier: int, alpha=flo
     return best_value, best_move
 
 
-def find_winning_lines(board, win_length=3):
-    n = len(board)  # Assume square board for simplicity
+def find_intersecting_lines(board, win_length=3):
+    # Assume square self.game_state.board_state for simplicity
+    n = len(board)
     winning_lines = []
 
-    # Check rows and columns
+    # Check rows
     for i in range(n):
-        for j in range(n - win_length + 1):
+
+        len_to_check = n - win_length + 1
+        for j in range(len_to_check):
             # Check row [i] from column [j]
             if all(board[i][j] == board[i][k] != "_" for k in range(j, j + win_length)):
                 winning_lines.append(((i, j), (i, j + win_length - 1)))
-            # Check column [j] from row [i]
+                if len_to_check - j % win_length != 0:
+                    break
+
+    # Check columns
+        for j in range(len_to_check):
+            # Check column [i] from row [j]
             if all(board[j][i] == board[k][i] != "_" for k in range(j, j + win_length)):
                 winning_lines.append(((j, i), (j + win_length - 1, i)))
+                if len_to_check - j % win_length != 0:
+                    break
 
     # Function to extract diagonals
-    def get_diagonals(board):
-        rows, cols = len(board), len(board[0])
+
+    def get_diagonals():
+        rows, cols = len(board), len(
+            board[0])
         diagonals = []
 
         # Top-left to bottom-right diagonals
         for col in range(cols - 2):
             diagonals.append([(i, col + i)
-                             for i in range(min(rows, cols - col)) if i < rows])
+                              for i in range(min(rows, cols - col)) if i < rows])
 
         for row in range(1, rows - 2):
             diagonals.append([(row + i, i)
-                             for i in range(min(rows - row, cols)) if i < cols])
+                              for i in range(min(rows - row, cols)) if i < cols])
 
         # Top-right to bottom-left diagonals
         for col in range(2, cols):
             diagonals.append([(i, col - i)
-                             for i in range(min(rows, col + 1)) if i < rows])
+                              for i in range(min(rows, col + 1)) if i < rows])
 
         for row in range(1, rows - 2):
             diagonals.append([(row + i, cols - i - 1)
-                             for i in range(min(rows - row, cols)) if i < cols])
+                              for i in range(min(rows - row, cols)) if i < cols])
 
         return diagonals
 
     # Check diagonals using the adjusted get_diagonals function
-    for diagonal in get_diagonals(board):
+    for diagonal in get_diagonals():
         if len(diagonal) >= win_length:  # Ensure diagonal is long enough
-            symbols = [board[x][y] for x, y in diagonal]
-            for i in range(len(symbols) - win_length + 1):
+            symbols = [board[x][y]
+                       for x, y in diagonal]
+
+            len_symbols = len(symbols) - win_length + 1
+            for i in range(len_symbols):
                 if all(s == symbols[i] != "_" for s in symbols[i:i+win_length]):
                     winning_lines.append(
                         (diagonal[i], diagonal[i+win_length-1]))
 
+                    # break if we find a winning line and there are no more possible winning lines
+                    if len_symbols - i % win_length != 0:
+                        break
+
     # tuple of tuples which represent the start and end of each winning line
     # using the format ((row_start, col_start), (row_end, col_end))
+
     return winning_lines
 
 
 # Example usage
 board_state = [
-    ["x", "o", "x", "x"],
-    ["x", "o", "x", "x"],
+    ["o", "o", "x", "x"],
     ["o", "x", "o", "o"],
-    ["x", "o", "o", "o"],
+    ["x", "o", "x", "o"],
+    ["x", "x", "o", "x"],
 ]
 win_length = 3  # For a Tic-Tac-Toe game
-winning_lines = find_winning_lines(board_state, win_length)
+# state = GameStatus(board_state, False)
+winning_lines = find_intersecting_lines(board_state)
 print(winning_lines)
+
+# [((0, 0), (2, 0)), ((1, 0), (1, 2)), ((2, 1), (2, 3)), ((3, 1), (3, 3)), ((1, 3), (3, 3)), ((0, 2), (2, 0)), ((1, 3), (3, 1))]
+
 
 # board_state = [
 #     ["x", "_", "o"],

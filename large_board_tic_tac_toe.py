@@ -453,19 +453,39 @@ class RandomBoardTicTacToe:
         n = len(self.game_state.board_state)
         winning_lines = []
 
-        # Check rows and columns
+        # Check rows
         for i in range(n):
+            match_count = n // win_length
 
             len_to_check = n - win_length + 1
-            for j in range(len_to_check):
+            j = 0
+            while j < len_to_check:
                 # Check row [i] from column [j]
                 if all(self.game_state.board_state[i][j] == self.game_state.board_state[i][k] != "_" for k in range(j, j + win_length)):
                     winning_lines.append(((i, j), (i, j + win_length - 1)))
-                # Check column [j] from row [i]
-                elif all(self.game_state.board_state[j][i] == self.game_state.board_state[k][i] != "_" for k in range(j, j + win_length)):
-                    winning_lines.append(((j, i), (j + win_length - 1, i)))
+                    # if match_count - 1 == 0:
+                    # break
 
+                    # match_count -= 1
+                    j += win_length
+                else:
+                    j += 1
+
+        # Check columns
+            j = 0
+            while j < len_to_check:
+                # Check column [i] from row [j]
+                if all(self.game_state.board_state[j][i] == self.game_state.board_state[k][i] != "_" for k in range(j, j + win_length)):
+                    winning_lines.append(((j, i), (j + win_length - 1, i)))
+                    # if match_count - 1 == 0:
+                    # break
+
+                    # match_count -= 1
+                    j += win_length
+                else:
+                    j += 1
         # Function to extract diagonals
+
         def get_diagonals():
             rows, cols = len(self.game_state.board_state), len(
                 self.game_state.board_state[0])
@@ -493,19 +513,28 @@ class RandomBoardTicTacToe:
 
         # Check diagonals using the adjusted get_diagonals function
         for diagonal in get_diagonals():
+            match_count = len(diagonal) // win_length
             if len(diagonal) >= win_length:  # Ensure diagonal is long enough
                 symbols = [self.game_state.board_state[x][y]
                            for x, y in diagonal]
 
                 len_symbols = len(symbols) - win_length + 1
-                for i in range(len_symbols):
+                i = 0
+                while i < len_symbols:
                     if all(s == symbols[i] != "_" for s in symbols[i:i+win_length]):
                         winning_lines.append(
                             (diagonal[i], diagonal[i+win_length-1]))
 
                         # break if we find a winning line and there are no more possible winning lines
-                        if len_symbols - i % win_length != 0:
-                            break
+                        # if (len_symbols - i) % win_length != 0:
+                        #     break
+                        # if match_count - 1 == 0:
+                        # break
+
+                        # match_count -= 1
+                        i += win_length
+                    else:
+                        i += 1
 
         # tuple of tuples which represent the start and end of each winning line
         # using the format ((row_start, col_start), (row_end, col_end))
@@ -521,7 +550,7 @@ class RandomBoardTicTacToe:
             end_x = end[1]
             end_y = end[0]
 
-            winning_lines_coords = []
+            # winning_lines_coords = []
 
             # [((0, 2), (2, 0))]
 
@@ -531,26 +560,40 @@ class RandomBoardTicTacToe:
 
             # 391, 45
 
+            # ((0,3), (2,1))
+            # start_x = 3
+            # start_y = 0
+            # end_x = 1
+            # end_y = 2
+
             # diagonal from bottom left to right
             if (start_x > end_x and start_y < end_y):
                 start_pos_x = self.grid_offset + \
                     (self.grid_square_size * (start_x + 1)) + \
-                    ((start_x + 1) * self.grid_line_tw)
+                    ((start_x) * self.grid_line_tw)
 
                 # print(start_pos_x, ' start_pos_x')
 
                 start_pos_y = self.grid_offset + \
                     (self.grid_square_size * start_y) + \
                     (start_y * self.grid_line_tw)
+
+                end_pos_x = self.grid_offset + \
+                    (self.grid_square_size * (end_x)) + \
+                    ((end_x) * self.grid_line_tw)
+
+                end_pos_y = self.grid_offset + \
+                    (self.grid_square_size * (end_y + 1)) + \
+                    ((end_y) * self.grid_line_tw)
                 # print(start_pos_y, ' start_pos_y')
 
                 start_pos = (start_pos_x, start_pos_y)
-                end_pos = (start_pos_y, start_pos_x)
+                end_pos = (end_pos_x, end_pos_y)
                 pygame.draw.line(self.screen, self.RED, start_pos,
                                  end_pos, self.grid_line_width * 2)
 
-                winning_lines_coords.append(
-                    (start_pos, end_pos, 'diagonal bl to tr'))
+                # winning_lines_coords.append(
+                #     (start_pos, end_pos, 'diagonal bl to tr'))
 
             # draw diagonal from top left to bottom right
             # (218.33333333333334, 45.0)  start_pos
@@ -564,18 +607,21 @@ class RandomBoardTicTacToe:
                     (self.grid_square_size * start_y) + \
                     (start_y * self.grid_line_tw)
 
-                end_pos_z = self.grid_offset + \
+                end_pos_x = self.grid_offset + \
                     (self.grid_square_size * (end_x + 1)) + \
-                    ((end_x + 1) * self.grid_line_tw)
+                    ((end_x) * self.grid_line_tw)
+                end_pos_y = self.grid_offset + \
+                    (self.grid_square_size * (end_y + 1)) + \
+                    ((end_y) * self.grid_line_tw)
 
                 start_pos = (start_pos_x, start_pos_y)
-                end_pos = (end_pos_z, end_pos_z)
+                end_pos = (end_pos_x, end_pos_y)
 
                 pygame.draw.line(self.screen, self.RED, start_pos,
                                  end_pos, self.grid_line_width * 2)
 
-                winning_lines_coords.append(
-                    (start_pos, end_pos, 'diagonal tl to br'))
+                # winning_lines_coords.append(
+                #     (start_pos, end_pos, 'diagonal tl to br'))
 
             # draw horizontal line
             elif (start_x < end_x and start_y == end_y):
@@ -589,14 +635,14 @@ class RandomBoardTicTacToe:
 
                 end_pos_x = self.grid_offset + \
                     (self.grid_square_size * (end_x + 1)) + \
-                    ((end_x + 1) * self.grid_line_tw)
+                    ((end_x) * self.grid_line_tw)
 
                 start_pos = (start_pos_x, start_end_pos_y)
                 end_pos = (end_pos_x, start_end_pos_y)
 
                 pygame.draw.line(self.screen, self.RED, start_pos,
-                                 end_pos, self.grid_line_width * 2)
-                winning_lines_coords.append((start_pos, end_pos, 'horizontal'))
+                                 end_pos, self.grid_line_width)
+                # winning_lines_coords.append((start_pos, end_pos, 'horizontal'))
 
             # draw vertical line
             elif (start_x == end_x and start_y < end_y):
@@ -610,7 +656,7 @@ class RandomBoardTicTacToe:
 
                 end_pos_y = self.grid_offset + \
                     (self.grid_square_size * (end_y + 1)) + \
-                    ((end_y + 1) * self.grid_line_tw)
+                    ((end_y) * self.grid_line_tw)
 
                 start_pos = (start_end_pos_x, start_pos_y)
                 end_pos = (start_end_pos_x, end_pos_y)
@@ -618,8 +664,8 @@ class RandomBoardTicTacToe:
                 # print(start_pos, ' start_pos')
                 # print(end_pos, ' end_pos')
                 pygame.draw.line(self.screen, self.RED, start_pos,
-                                 end_pos, self.grid_line_width * 2)
-                winning_lines_coords.append((start_pos, end_pos, 'vertical'))
+                                 end_pos, self.grid_line_width)
+                # winning_lines_coords.append((start_pos, end_pos, 'vertical'))
 
             # end_pos_x = self.grid_offset + \
             #     (self.grid_square_size * (end_x + 1)) + \
@@ -655,7 +701,7 @@ class RandomBoardTicTacToe:
         THE RETURN VALUES FROM YOUR MINIMAX/NEGAMAX ALGORITHM SHOULD BE THE SCORE, MOVE WHERE SCORE IS AN INTEGER
         NUMBER AND MOVE IS AN X,Y LOCATION RETURNED BY THE AGENT
         """
-        ai_depth = 5
+        ai_depth = 4
 
         if self.player_x == 0:
             if self.selected_algorithm == 0:
@@ -667,6 +713,8 @@ class RandomBoardTicTacToe:
                 value, move = minimax(self.game_state, ai_depth, True)
             else:
                 value, move = negamax(self.game_state, ai_depth, 1)
+
+        print(f"AI move: {move} with value: {value}")
 
         self.move(move)
 
@@ -783,11 +831,13 @@ class RandomBoardTicTacToe:
 
         clock = pygame.time.Clock()
 
+        pygame.display.set_caption("Tic Tac Toe!")
+
         while self.running and not done:
-            pygame.display.set_caption("Tic Tac Toe!")
             self.screen.fill(self.BLACK)
             self.draw_grid()
             if self.is_game_over():
+                pygame.display.set_caption("Game Over!")
 
                 x_score, o_score = self.game_state.get_score(
                     self.game_state.is_terminal())[1]
@@ -809,8 +859,8 @@ class RandomBoardTicTacToe:
 
                 # print(self.find_intersecting_lines())
 
-                if len(self.game_state.board_state) == 3:
-                    self.draw_winning_lines(self.find_intersecting_lines())
+                # if len(self.game_state.board_state) == 3:
+                self.draw_winning_lines(self.find_intersecting_lines())
                 # self.screen.blit(
                 #     self.win_message[winner].name, self.win_message[winner].rect)
 
@@ -854,11 +904,14 @@ class RandomBoardTicTacToe:
                         if mode == "player_vs_ai":
                             if move in self.game_state.get_moves() and (self.game_state.turn_O != (self.player_x == 0)) and not self.is_game_over():
                                 self.move(move)
+                                self.change_turn()
                                 if not self.is_game_over():
                                     self.play_ai()
+                                    self.change_turn()
                         elif mode == "player_vs_player":
                             if move in self.game_state.get_moves() and not self.is_game_over():
                                 self.move(move)
+                                self.change_turn()
 
                     case pygame.KEYDOWN:
 
