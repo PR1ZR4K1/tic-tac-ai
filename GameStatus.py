@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing_extensions import List, LiteralString
+from typing import List, LiteralString
 from copy import deepcopy
 
 
@@ -53,15 +53,15 @@ def evaluate_line(elements: List[LiteralString], check_point: int, empty_spaces:
 
     else:
         # For terminal check or any other check_point value, handle as before
-        x_seq = elements.count("x" * check_point)
-        o_seq = elements.count("o" * check_point)
+        x_seq_3 = elements.count("x" * check_point)
+        o_seq_3 = elements.count("o" * check_point)
 
-        if x_seq > 0:
-            score += x_seq * 10 + (empty_spaces + 1)
-        if o_seq > 0:
-            score -= o_seq * 10 + (empty_spaces + 1)
+        if x_seq_3 > 0:
+            score += x_seq_3 * 10 + (empty_spaces + 1)
+        if o_seq_3 > 0:
+            score -= o_seq_3 * 10 + (empty_spaces + 1)
 
-    return score
+    return score, (x_seq_3, o_seq_3)
 
 
 def get_diagonals(board):
@@ -112,7 +112,7 @@ class GameStatus:
         """
 
         if len(self.board_state) == 3:
-            score = self.get_score(True)
+            score = self.get_score(True)[0]
             if score > 0:
                 self.winner = "x"
                 return True
@@ -127,6 +127,12 @@ class GameStatus:
 
                 self.winner = "draw"
                 return True
+        else:
+            for row in self.board_state:
+                if "_" in row:
+                    return False
+
+            return True
 
         # self.oldScores = self.get_score(True)
 
@@ -142,50 +148,73 @@ class GameStatus:
         cols = len(self.board_state[0])
         empty_spaces = len(self.get_moves())
         # print(empty_spaces, 'empty spaces')
+        total_score = 0
+        x_score = 0
+        o_score = 0
         scores = 0
         check_point = 3 if terminal else 2
 
         # this is how we evaluate all horizontal lines
         for row in range(rows):
-            scores += evaluate_line(self.board_state[row],
-                                    check_point, empty_spaces=empty_spaces)
+            scores = evaluate_line(self.board_state[row],
+                                   check_point, empty_spaces=empty_spaces)
+            total_score += scores[0]
+
+            if terminal:
+                x_score += scores[1][0]
+                o_score += scores[1][1]
 
             # print(
             #     f'Row: eval {evaluate_line(self.board_state[row], check_point, empty_spaces=empty_spaces)}')
 
         # this is how we evaluate all vertical lines
         for col in range(cols):
-            scores += evaluate_line([self.board_state[row][col]
+            scores = evaluate_line([self.board_state[row][col]
                                     for row in range(rows)], check_point, empty_spaces=empty_spaces)
+
+            total_score += scores[0]
+
+            if terminal:
+                x_score += scores[1][0]
+                o_score += scores[1][1]
             # print(
             # f'Col: eval {evaluate_line([self.board_state[row][col] for row in range(rows)], check_point, empty_spaces=empty_spaces)}')
 
         # this is how we evaluate all diagonal lines
         for diagonal in get_diagonals(self.board_state):
-            scores += evaluate_line(diagonal, check_point,
-                                    empty_spaces=empty_spaces)
+            scores = evaluate_line(diagonal, check_point,
+                                   empty_spaces=empty_spaces)
+
+            total_score += scores[0]
+
+            if terminal:
+                x_score += scores[1][0]
+                o_score += scores[1][1]
             # print(
             # f'Diagonal: eval {evaluate_line(diagonal, check_point, empty_spaces=empty_spaces)}')
 
-        return scores
+        return total_score, (x_score, o_score)
 
     def get_negamax_score(self, terminal):
         rows = len(self.board_state)
         cols = len(self.board_state[0])
+        empty_spaces = len(self.get_moves())
         total_score = 0
         check_point = 3 if terminal else 2
 
         for row in range(rows):
-            total_score += evaluate_line(self.board_state[row], check_point)
+            total_score += evaluate_line(
+                self.board_state[row], check_point, empty_spaces=empty_spaces)[0]
 
         for col in range(cols):
             total_score += evaluate_line([self.board_state[row][col] for row in range(
-                rows)], check_point)
+                rows)], check_point, empty_spaces=empty_spaces)[0]
             # print('This thing /n', [self.board_state[row][col] for row in range(
             #     rows)])
 
         for diagonal in get_diagonals(self.board_state):
-            total_score += evaluate_line(diagonal, check_point)
+            total_score += evaluate_line(diagonal,
+                                         check_point, empty_spaces=empty_spaces)[0]
 
         return total_score
 

@@ -66,7 +66,7 @@ def minimax(game_state: GameStatus, depth: int, maximizingPlayer: bool, alpha=fl
     # print(game_state.is_terminal())
     if depth == 0 or terminal:
         # Assuming this returns a single score
-        score = game_state.get_score(terminal)
+        score, _ = game_state.get_score(terminal)
         return score, None  # No best move at leaf nodes or terminal states
 
     if maximizingPlayer:
@@ -102,7 +102,7 @@ def minimax(game_state: GameStatus, depth: int, maximizingPlayer: bool, alpha=fl
 def negamax(game_status: GameStatus, depth: int, turn_multiplier: int, alpha=float('-inf'), beta=float('inf')):
     terminal = game_status.is_terminal()
     if (depth == 0) or (terminal):
-        scores = game_status.get_score(terminal)
+        scores, _ = game_status.get_score(terminal)
 
         # Negate the score since negamax returns score from the perspective of the next player
         return scores * turn_multiplier, None

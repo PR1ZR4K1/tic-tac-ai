@@ -158,15 +158,79 @@ def negamax(game_status: GameStatus, depth: int, turn_multiplier: int, alpha=flo
     return best_value, best_move
 
 
+def find_winning_lines(board, win_length=3):
+    n = len(board)  # Assume square board for simplicity
+    winning_lines = []
+
+    # Check rows and columns
+    for i in range(n):
+        for j in range(n - win_length + 1):
+            # Check row [i] from column [j]
+            if all(board[i][j] == board[i][k] != "_" for k in range(j, j + win_length)):
+                winning_lines.append(((i, j), (i, j + win_length - 1)))
+            # Check column [j] from row [i]
+            if all(board[j][i] == board[k][i] != "_" for k in range(j, j + win_length)):
+                winning_lines.append(((j, i), (j + win_length - 1, i)))
+
+    # Function to extract diagonals
+    def get_diagonals(board):
+        rows, cols = len(board), len(board[0])
+        diagonals = []
+
+        # Top-left to bottom-right diagonals
+        for col in range(cols - 2):
+            diagonals.append([(i, col + i)
+                             for i in range(min(rows, cols - col)) if i < rows])
+
+        for row in range(1, rows - 2):
+            diagonals.append([(row + i, i)
+                             for i in range(min(rows - row, cols)) if i < cols])
+
+        # Top-right to bottom-left diagonals
+        for col in range(2, cols):
+            diagonals.append([(i, col - i)
+                             for i in range(min(rows, col + 1)) if i < rows])
+
+        for row in range(1, rows - 2):
+            diagonals.append([(row + i, cols - i - 1)
+                             for i in range(min(rows - row, cols)) if i < cols])
+
+        return diagonals
+
+    # Check diagonals using the adjusted get_diagonals function
+    for diagonal in get_diagonals(board):
+        if len(diagonal) >= win_length:  # Ensure diagonal is long enough
+            symbols = [board[x][y] for x, y in diagonal]
+            for i in range(len(symbols) - win_length + 1):
+                if all(s == symbols[i] != "_" for s in symbols[i:i+win_length]):
+                    winning_lines.append(
+                        (diagonal[i], diagonal[i+win_length-1]))
+
+    # tuple of tuples which represent the start and end of each winning line
+    # using the format ((row_start, col_start), (row_end, col_end))
+    return winning_lines
+
+
+# Example usage
 board_state = [
-    ["x", "_", "o"],
-    ["_", "_", "_"],
-    ["o", "_", "x"]
+    ["x", "o", "x", "x"],
+    ["x", "o", "x", "x"],
+    ["o", "x", "o", "o"],
+    ["x", "o", "o", "o"],
 ]
+win_length = 3  # For a Tic-Tac-Toe game
+winning_lines = find_winning_lines(board_state, win_length)
+print(winning_lines)
 
-state = GameStatus(board_state, False)
-# print(get_negamax_score(False, state.board_state))
-print(negamax(state, depth=9, turn_multiplier=1))
+# board_state = [
+#     ["x", "_", "o"],
+#     ["_", "_", "_"],
+#     ["o", "_", "x"]
+# ]
 
-print(state.get_score(True))
+# state = GameStatus(board_state, False)
+# # print(get_negamax_score(False, state.board_state))
+# print(negamax(state, depth=9, turn_multiplier=1))
+
+# print(state.get_score(True))
 # print(negamax(state, 999, True))

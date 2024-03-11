@@ -23,11 +23,17 @@ class Text:
         self.name = self.font.render(
             self.text, True, self.font_color, bg_color)
 
+    def setText(self, text: str):
+        self.text = text
+        self.name = self.font.render(
+            self.text, True, self.font_color)
+        self.rect = self.name.get_rect(center=(self.x_pos, self.y_pos))
+
     def setSelected(self, isSelected: bool):
         self.isSelected = isSelected
 
-    def get_hitbox(self, x_pos, y_pos, x_offset = 0):
-        hitbox = self.rect.inflate(x_pos,y_pos)
+    def get_hitbox(self, x_pos, y_pos, x_offset=0):
+        hitbox = self.rect.inflate(x_pos, y_pos)
         hitbox.x += x_offset
         return hitbox
 

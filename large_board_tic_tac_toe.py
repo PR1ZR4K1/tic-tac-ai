@@ -71,7 +71,6 @@ class RandomBoardTicTacToe:
 
         pygame.init()
 
-        # main menu options
         self.menu_options = [
             Text("Play", x_pos=self.width/2-20, y_pos=150,
                  font_size=self.FONT_SIZE, font_color=self.WHITE),
@@ -119,7 +118,7 @@ class RandomBoardTicTacToe:
             Text("Nought (O)", x_pos=self.width/2 - 39, y_pos=365,
                  font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
         ]
-        self.selected_player_symbol = 0  # set cross to be default
+        self.player_x = 0  # set cross to be default
 
         # set board size in options menu
         self.board_size_option = [
@@ -130,10 +129,21 @@ class RandomBoardTicTacToe:
         ]
         # make sure key clicks dont do anything unless in type box
         self.is_typing_size = False
-
         self.error_board_size_message = Text("Invalid Board Size! Minimum: 3", x_pos=self.width/2, y_pos=520,
                                              font_size=self.OPTIONS_SIZE, font_color=self.RED, font_file='basic.ttf')
         self.show_error_message = False
+
+        # Messages for end of game
+
+        self.win_message = [
+            Text("X Wins!", x_pos=self.width/6, y_pos=23,
+                 font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
+            Text("O Wins!", x_pos=self.width/6, y_pos=23,
+                 font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
+            Text("It's A Tie!", x_pos=self.width/6, y_pos=23,
+                 font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
+        ]
+        self.winner = 0
 
         self.screen = pygame.display.set_mode(self.size)
 
@@ -177,7 +187,7 @@ class RandomBoardTicTacToe:
             (self.grid_lines-1) * self.grid_line_tw))) / (self.grid_squares)
 
         new_board = np.full((new_grid_size, new_grid_size), "_")
-        self.game_state = GameStatus(new_board)
+        self.game_state = GameStatus(new_board, self.player_x == 1)
 
     def main_menu(self):
 
@@ -240,7 +250,6 @@ class RandomBoardTicTacToe:
                 self.screen.blit(obj.name, obj.rect)
 
             # Draw the entry box for board size
-            # Adjust the position as needed
             entry_box_pos = (self.width/2 + 15, 460)
             entry_box_size = (50, 35)  # Width, Height
             self.entry_box_rect = pygame.Rect(entry_box_pos, entry_box_size)
@@ -254,21 +263,24 @@ class RandomBoardTicTacToe:
             for button, option in enumerate(self.game_mode_options):
                 mode_circle_center = (self.width/2-120, option.y_pos)
                 option.hitbox = option.get_hitbox(50, 20, -15)
-                pygame.draw.rect(self.screen, self.RED, option.hitbox, 1) #draws the hitbox
+                # pygame.draw.rect(self.screen, self.RED,
+                #                  option.hitbox, 1)  # draws the hitbox
 
                 pygame.draw.circle(self.screen, self.WHITE,
                                    mode_circle_center, 10, 2)
 
                 # fills in circle for whichever option is selected
                 if button == self.selected_game_mode:
+                    self.selected_game_mode = button
                     pygame.draw.circle(
                         self.screen, self.WHITE, mode_circle_center, 5)
-                    
+
             # Display radio buttons and hitboxes for ALGORITHM CHOICE
             for button, option in enumerate(self.algorithm_options):
                 mode_circle_center = (self.width/2-70, option.y_pos)
                 option.hitbox = option.get_hitbox(50, 20, -15)
-                pygame.draw.rect(self.screen, self.RED, option.hitbox, 1) #draws the hitbox
+                # pygame.draw.rect(self.screen, self.RED,
+                #                  option.hitbox, 1)  # draws the hitbox
 
                 pygame.draw.circle(self.screen, self.WHITE,
                                    mode_circle_center, 10, 2)
@@ -283,12 +295,13 @@ class RandomBoardTicTacToe:
                 symbol_circle_center = (self.width/2-120, option.y_pos)
                 # creates hitbox around both button and respective text
                 option.hitbox = option.get_hitbox(50, 20, -15)
-                pygame.draw.rect(self.screen, self.RED, option.hitbox, 1) #draws the hitbox
+                # pygame.draw.rect(self.screen, self.RED,
+                #                  option.hitbox, 1)  # draws the hitbox
 
                 pygame.draw.circle(self.screen, self.WHITE,  # creates non filled circle
                                    symbol_circle_center, 10, 2)
 
-                if button == self.selected_player_symbol:  # if option is selected, fill the circle
+                if button == self.player_x:  # if option is selected, fill the circle
                     pygame.draw.circle(
                         self.screen, self.WHITE, symbol_circle_center, 5)
 
@@ -320,7 +333,7 @@ class RandomBoardTicTacToe:
                     # Check for player symbol selection
                     for i, option in enumerate(self.player_symbol_options):
                         if option.hitbox.collidepoint(mouse_pos):
-                            self.selected_player_symbol = i  # Update the selected player symbol
+                            self.player_x = i  # Update the selected player symbol
                             break  # Break after selection to avoid multiple selections
 
                     # Check if they click on board size number
@@ -383,7 +396,6 @@ class RandomBoardTicTacToe:
         """
         YOUR CODE HERE TO DRAW THE CIRCLE FOR THE NOUGHTS PLAYER
         """
-
         circle_color = self.CIRCLE_COLOR  # The color of the cross
         circle_width = self.grid_line_width  # The width of the circle lines
         # The length of each line of the circle
@@ -436,6 +448,191 @@ class RandomBoardTicTacToe:
         pygame.draw.line(self.screen, cross_color,
                          start_line2, end_line2, cross_width)
 
+    def find_intersecting_lines(self, win_length=3):
+        # Assume square self.game_state.board_state for simplicity
+        n = len(self.game_state.board_state)
+        winning_lines = []
+
+        # Check rows and columns
+        for i in range(n):
+
+            len_to_check = n - win_length + 1
+            for j in range(len_to_check):
+                # Check row [i] from column [j]
+                if all(self.game_state.board_state[i][j] == self.game_state.board_state[i][k] != "_" for k in range(j, j + win_length)):
+                    winning_lines.append(((i, j), (i, j + win_length - 1)))
+                # Check column [j] from row [i]
+                elif all(self.game_state.board_state[j][i] == self.game_state.board_state[k][i] != "_" for k in range(j, j + win_length)):
+                    winning_lines.append(((j, i), (j + win_length - 1, i)))
+
+        # Function to extract diagonals
+        def get_diagonals():
+            rows, cols = len(self.game_state.board_state), len(
+                self.game_state.board_state[0])
+            diagonals = []
+
+            # Top-left to bottom-right diagonals
+            for col in range(cols - 2):
+                diagonals.append([(i, col + i)
+                                  for i in range(min(rows, cols - col)) if i < rows])
+
+            for row in range(1, rows - 2):
+                diagonals.append([(row + i, i)
+                                  for i in range(min(rows - row, cols)) if i < cols])
+
+            # Top-right to bottom-left diagonals
+            for col in range(2, cols):
+                diagonals.append([(i, col - i)
+                                  for i in range(min(rows, col + 1)) if i < rows])
+
+            for row in range(1, rows - 2):
+                diagonals.append([(row + i, cols - i - 1)
+                                  for i in range(min(rows - row, cols)) if i < cols])
+
+            return diagonals
+
+        # Check diagonals using the adjusted get_diagonals function
+        for diagonal in get_diagonals():
+            if len(diagonal) >= win_length:  # Ensure diagonal is long enough
+                symbols = [self.game_state.board_state[x][y]
+                           for x, y in diagonal]
+
+                len_symbols = len(symbols) - win_length + 1
+                for i in range(len_symbols):
+                    if all(s == symbols[i] != "_" for s in symbols[i:i+win_length]):
+                        winning_lines.append(
+                            (diagonal[i], diagonal[i+win_length-1]))
+
+                        # break if we find a winning line and there are no more possible winning lines
+                        if len_symbols - i % win_length != 0:
+                            break
+
+        # tuple of tuples which represent the start and end of each winning line
+        # using the format ((row_start, col_start), (row_end, col_end))
+
+        return winning_lines
+
+    def draw_winning_lines(self, winning_lines):
+        for line in winning_lines:
+            start = line[0]
+            end = line[1]
+            start_x = start[1]
+            start_y = start[0]
+            end_x = end[1]
+            end_y = end[0]
+
+            winning_lines_coords = []
+
+            # [((0, 2), (2, 0))]
+
+            # Draw the winning line
+            # print(start_x, start_y, end_x, end_y,
+            #       ' start_x, start_y, end_x, end_y')
+
+            # 391, 45
+
+            # diagonal from bottom left to right
+            if (start_x > end_x and start_y < end_y):
+                start_pos_x = self.grid_offset + \
+                    (self.grid_square_size * (start_x + 1)) + \
+                    ((start_x + 1) * self.grid_line_tw)
+
+                # print(start_pos_x, ' start_pos_x')
+
+                start_pos_y = self.grid_offset + \
+                    (self.grid_square_size * start_y) + \
+                    (start_y * self.grid_line_tw)
+                # print(start_pos_y, ' start_pos_y')
+
+                start_pos = (start_pos_x, start_pos_y)
+                end_pos = (start_pos_y, start_pos_x)
+                pygame.draw.line(self.screen, self.RED, start_pos,
+                                 end_pos, self.grid_line_width * 2)
+
+                winning_lines_coords.append(
+                    (start_pos, end_pos, 'diagonal bl to tr'))
+
+            # draw diagonal from top left to bottom right
+            # (218.33333333333334, 45.0)  start_pos
+            # (45.0, 218.33333333333334)  end_pos
+            elif (start_x < end_x and start_y < end_y):
+                start_pos_x = self.grid_offset + \
+                    (self.grid_square_size * (start_x)) + \
+                    ((start_x) * self.grid_line_tw)
+
+                start_pos_y = self.grid_offset + \
+                    (self.grid_square_size * start_y) + \
+                    (start_y * self.grid_line_tw)
+
+                end_pos_z = self.grid_offset + \
+                    (self.grid_square_size * (end_x + 1)) + \
+                    ((end_x + 1) * self.grid_line_tw)
+
+                start_pos = (start_pos_x, start_pos_y)
+                end_pos = (end_pos_z, end_pos_z)
+
+                pygame.draw.line(self.screen, self.RED, start_pos,
+                                 end_pos, self.grid_line_width * 2)
+
+                winning_lines_coords.append(
+                    (start_pos, end_pos, 'diagonal tl to br'))
+
+            # draw horizontal line
+            elif (start_x < end_x and start_y == end_y):
+                start_end_pos_y = self.grid_offset + \
+                    (self.grid_square_size * (start_y + 1)) - (self.grid_square_size/2) + \
+                    (start_y * self.grid_line_tw)
+
+                start_pos_x = self.grid_offset + \
+                    (self.grid_square_size * (start_x)) + \
+                    ((start_x) * self.grid_line_tw)
+
+                end_pos_x = self.grid_offset + \
+                    (self.grid_square_size * (end_x + 1)) + \
+                    ((end_x + 1) * self.grid_line_tw)
+
+                start_pos = (start_pos_x, start_end_pos_y)
+                end_pos = (end_pos_x, start_end_pos_y)
+
+                pygame.draw.line(self.screen, self.RED, start_pos,
+                                 end_pos, self.grid_line_width * 2)
+                winning_lines_coords.append((start_pos, end_pos, 'horizontal'))
+
+            # draw vertical line
+            elif (start_x == end_x and start_y < end_y):
+                start_end_pos_x = self.grid_offset + \
+                    (self.grid_square_size * (start_x + 1) - (self.grid_square_size / 2)) + \
+                    (start_x * self.grid_line_tw)
+
+                start_pos_y = self.grid_offset + \
+                    (self.grid_square_size * (start_y)) + \
+                    ((start_y) * self.grid_line_tw)
+
+                end_pos_y = self.grid_offset + \
+                    (self.grid_square_size * (end_y + 1)) + \
+                    ((end_y + 1) * self.grid_line_tw)
+
+                start_pos = (start_end_pos_x, start_pos_y)
+                end_pos = (start_end_pos_x, end_pos_y)
+                # print(start_x, ' start_x')
+                # print(start_pos, ' start_pos')
+                # print(end_pos, ' end_pos')
+                pygame.draw.line(self.screen, self.RED, start_pos,
+                                 end_pos, self.grid_line_width * 2)
+                winning_lines_coords.append((start_pos, end_pos, 'vertical'))
+
+            # end_pos_x = self.grid_offset + \
+            #     (self.grid_square_size * (end_x + 1)) + \
+            #     ((end_x + 1) * self.grid_line_tw)
+            # end_pos_y = self.grid_offset + \
+            #     (self.grid_square_size * end_y) + \
+            #     (end_y * self.grid_line_tw)
+
+            # print(end_pos_x, ' end_pos_x')
+            # print(end_pos_y, ' end_pos_y')
+
+            # print(winning_lines_coords, ' winning_lines_coords')
+
     def is_game_over(self):
         """
         YOUR CODE HERE TO SEE IF THE GAME HAS TERMINATED AFTER MAKING A MOVE. YOU SHOULD USE THE IS_TERMINAL()
@@ -458,21 +655,42 @@ class RandomBoardTicTacToe:
         THE RETURN VALUES FROM YOUR MINIMAX/NEGAMAX ALGORITHM SHOULD BE THE SCORE, MOVE WHERE SCORE IS AN INTEGER
         NUMBER AND MOVE IS AN X,Y LOCATION RETURNED BY THE AGENT
         """
-        value, move = minimax(self.game_state, 3, False)
+        ai_depth = 5
+
+        if self.player_x == 0:
+            if self.selected_algorithm == 0:
+                value, move = minimax(self.game_state, ai_depth, False)
+            else:
+                value, move = negamax(self.game_state, ai_depth, -1)
+        else:
+            if self.selected_algorithm == 0:
+                value, move = minimax(self.game_state, ai_depth, True)
+            else:
+                value, move = negamax(self.game_state, ai_depth, 1)
 
         self.move(move)
-        print(f'Best Move: {move}, Value: {value}')
-        # self.change_turn()
-        # pygame.display.update()
-        # terminal = self.game_state.is_terminal()
-        """ USE self.game_state.get_scores(terminal) HERE TO COMPUTE AND DISPLAY THE FINAL SCORES """
 
     def game_reset(self):
-        self.main_menu()
         """
         YOUR CODE HERE TO RESET THE BOARD TO VALUE 0 FOR ALL CELLS AND CREATE A NEW GAME STATE WITH NEWLY INITIALIZED
         BOARD STATE
         """
+
+        # Re-apply the grid settings based on the reset size
+        # self.apply_changes(self.grid_squares)
+
+        # Create a new board with default values
+        new_board = np.full((self.grid_squares, self.grid_squares), "_")
+
+        # Reset the game state with the new board
+        self.game_state = GameStatus(new_board)
+
+        # Reset other necessary states if needed
+        self.show_error_message = False
+        # Add any additional resets for scores, player turns, etc.
+
+        # Optional: Return to the main menu or directly to a new game
+        # self.main_menu()  # or self.play_game()
 
         pygame.display.update()
 
@@ -550,6 +768,16 @@ class RandomBoardTicTacToe:
             # print("Clicked outside of the grid")
             return None, None
 
+    def draw_text(self, base_text, position, font_size, font_color, font_type):
+        text = base_text  # Combine the base text with the variable
+        font = pygame.font.Font(font_type, font_size)  # Create a Font object
+        # Render the text into a surface
+        text_surface = font.render(text, True, font_color)
+        # Get the rect of the text surface for positioning
+        text_rect = text_surface.get_rect(center=position)
+        # Draw the text surface to the screen
+        self.screen.blit(text_surface, text_rect)
+
     def play_game(self, mode="player_vs_ai"):
         done = False
 
@@ -559,6 +787,33 @@ class RandomBoardTicTacToe:
             pygame.display.set_caption("Tic Tac Toe!")
             self.screen.fill(self.BLACK)
             self.draw_grid()
+            if self.is_game_over():
+
+                x_score, o_score = self.game_state.get_score(
+                    self.game_state.is_terminal())[1]
+
+                if (x_score > o_score):
+                    winner = 0
+                elif (o_score > x_score):
+                    winner = 1
+                else:
+                    winner = 2
+
+                score_text = f"{self.win_message[winner].text}     X Score: {x_score}, O Score: {o_score}"
+                restart_text = "Press R to reset or Q to quit!"
+
+                self.draw_text(
+                    score_text, (self.width // 2, self.height // 24), self.FONT_SIZE - 30, self.RED, 'basic.ttf')
+                self.draw_text(
+                    restart_text, (self.width // 2, self.height * 23 // 24), self.FONT_SIZE-30, self.RED, 'basic.ttf')
+
+                # print(self.find_intersecting_lines())
+
+                if len(self.game_state.board_state) == 3:
+                    self.draw_winning_lines(self.find_intersecting_lines())
+                # self.screen.blit(
+                #     self.win_message[winner].name, self.win_message[winner].rect)
+
             pygame.display.update()
 
             for event in pygame.event.get():  # User did something
@@ -596,17 +851,23 @@ class RandomBoardTicTacToe:
                         mouse_pos = pygame.mouse.get_pos()
                         move = self.get_clicked_box(mouse_pos)
 
-                        if move in self.game_state.get_moves() and self.game_state.turn_O == False:
-                            self.move(move)
-                            if not self.is_game_over():
-                                self.play_ai()
-                        # print(mouse_pos)
-                            print(f'Clicked!, {self.game_state.board_state}')
+                        if mode == "player_vs_ai":
+                            if move in self.game_state.get_moves() and (self.game_state.turn_O != (self.player_x == 0)) and not self.is_game_over():
+                                self.move(move)
+                                if not self.is_game_over():
+                                    self.play_ai()
+                        elif mode == "player_vs_player":
+                            if move in self.game_state.get_moves() and not self.is_game_over():
+                                self.move(move)
 
                     case pygame.KEYDOWN:
 
                         if event.key == pygame.K_q:
+                            self.game_reset()
                             done = True
+
+                        if event.key == pygame.K_r:
+                            self.game_reset()
 
                         if event.key == pygame.K_ESCAPE:
                             self.quit()
@@ -628,7 +889,10 @@ def handle_k_return(current_selection, tictactoegame):
     match current_selection:
         case 0:
             print('play the game!')
-            tictactoegame.play_game()
+            if tictactoegame.selected_game_mode == 0:
+                tictactoegame.play_game('player_vs_player')
+            else:
+                tictactoegame.play_game()
         case 1:
             print('options!')
             tictactoegame.options_menu()
@@ -646,9 +910,10 @@ def handle_mouse_up(pos, tictactoegame):
         match obj.text.lower():
             case 'play':
                 print('play the game!')
-                # obj.setBackgroundColor(tictactoegame.RED)
-                # obj.setSelected(True)
-                tictactoegame.play_game()
+                if tictactoegame.selected_game_mode == 0:
+                    tictactoegame.play_game('player_vs_player')
+                else:
+                    tictactoegame.play_game()
             case 'options':
                 print('options!')
                 tictactoegame.options_menu()
