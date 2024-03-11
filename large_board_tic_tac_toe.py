@@ -86,50 +86,58 @@ class RandomBoardTicTacToe:
         self.options_menu_items = [
             Text("Game Mode: ", x_pos=self.width/2, y_pos=30,
                  font_size=self.OPTIONS_SIZE + 10, font_color=self.WHITE, font_file='basic.ttf', underline=True),
-            Text("Player Symbol: ", x_pos=self.width/2, y_pos=190,
+            Text("Player Symbol: ", x_pos=self.width/2, y_pos=260,
                  font_size=self.OPTIONS_SIZE + 10, font_color=self.WHITE, font_file='basic.ttf', underline=True),
-            Text("Board Size: ", x_pos=self.width/2, y_pos=350,
+            Text("Board Size: ", x_pos=self.width/2, y_pos=420,
                  font_size=self.OPTIONS_SIZE + 10, font_color=self.WHITE, font_file='basic.ttf', underline=True),
-            Text("Apply Changes", x_pos=self.width/2, y_pos=500,
+            Text("Apply Changes", x_pos=self.width/2, y_pos=570,
                  font_size=self.OPTIONS_SIZE + 15, font_color=self.WHITE, font_file='basic.ttf'),
         ]
         self.options_menu_items[3].setSelected(True)
 
         # Game-mode options in options-menu
         self.game_mode_options = [
-            Text("Human vs Human", x_pos=self.width/2, y_pos=85,
+            Text("Human vs Human", x_pos=self.width/2, y_pos=65,
                  font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
-            Text("Human vs Computer", x_pos=self.width/2 + 16, y_pos=135,
+            Text("Human vs Computer", x_pos=self.width/2 + 16, y_pos=115,
                  font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
         ]
         self.selected_game_mode = 0  # set Human vs Human to be default
 
+        self.algorithm_options = [
+            Text("Minimax", x_pos=self.width/2, y_pos=160,
+                 font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
+            Text("Negamax", x_pos=self.width/2 + 7, y_pos=205,
+                 font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
+        ]
+        self.selected_algorithm = 0
+
         # player-symbol options in options-menu
         self.player_symbol_options = [
-            Text("Cross (X)", x_pos=self.width/2, y_pos=245,
+            Text("Cross (X)", x_pos=self.width/2 - 45, y_pos=315,
                  font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
-            Text("Nought (O)", x_pos=self.width/2, y_pos=295,
+            Text("Nought (O)", x_pos=self.width/2 - 39, y_pos=365,
                  font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
         ]
         self.selected_player_symbol = 0  # set cross to be default
 
         # set board size in options menu
         self.board_size_option = [
-            Text("Size: ", x_pos=self.width/2 - 20, y_pos=405,
+            Text("Size: ", x_pos=self.width/2 - 20, y_pos=475,
                  font_size=self.OPTIONS_SIZE, font_color=self.WHITE, font_file='basic.ttf'),
-            Text("3", x_pos=(self.width/2) + 40, y_pos=405,
+            Text("3", x_pos=(self.width/2) + 40, y_pos=475,
                  font_size=self.OPTIONS_SIZE, font_color=self.BLACK, bg_color=(255, 255, 255), font_file='basic.ttf')
         ]
         # make sure key clicks dont do anything unless in type box
         self.is_typing_size = False
 
-        self.error_board_size_message = Text("Invalid Board Size! Minimum: 3", x_pos=self.width/2, y_pos=460,
+        self.error_board_size_message = Text("Invalid Board Size! Minimum: 3", x_pos=self.width/2, y_pos=520,
                                              font_size=self.OPTIONS_SIZE, font_color=self.RED, font_file='basic.ttf')
         self.show_error_message = False
 
         self.screen = pygame.display.set_mode(self.size)
 
-        # Initialize pygame
+        # Initialize pygameW
         self.game_reset()
 
     def quit(self):
@@ -208,7 +216,7 @@ class RandomBoardTicTacToe:
                     pygame.draw.rect(self.screen, self.RED,
                                      obj.rectangle_rect, border_radius=1)
                     obj.setBackgroundColor(self.RED)
-                    obj.hitbox = obj.get_hitbox(10, 5)
+                    obj.hitbox = obj.get_hitbox(6, 4)
                     pygame.draw.rect(self.screen, self.WHITE,
                                      obj.hitbox, 1)  # draws the hitbox
 
@@ -217,6 +225,10 @@ class RandomBoardTicTacToe:
 
             # Display Game mode options (Human vs. Human OR Human vs. Computer)
             for obj in self.game_mode_options:
+                self.screen.blit(obj.name, obj.rect)
+
+            # Display Algorithm options (Minimax OR Negamax)
+            for obj in self.algorithm_options:
                 self.screen.blit(obj.name, obj.rect)
 
             # Display player symbol options (Nought (0) OR Cross (X))
@@ -229,7 +241,7 @@ class RandomBoardTicTacToe:
 
             # Draw the entry box for board size
             # Adjust the position as needed
-            entry_box_pos = (self.width/2 + 15, 390)
+            entry_box_pos = (self.width/2 + 15, 460)
             entry_box_size = (50, 35)  # Width, Height
             self.entry_box_rect = pygame.Rect(entry_box_pos, entry_box_size)
             pygame.draw.rect(self.screen, self.WHITE, self.entry_box_rect, 0)
@@ -242,7 +254,7 @@ class RandomBoardTicTacToe:
             for button, option in enumerate(self.game_mode_options):
                 mode_circle_center = (self.width/2-120, option.y_pos)
                 option.hitbox = option.get_hitbox(50, 20, -15)
-                # pygame.draw.rect(self.screen, self.RED, option.hitbox, 1) #draws the hitbox
+                pygame.draw.rect(self.screen, self.RED, option.hitbox, 1) #draws the hitbox
 
                 pygame.draw.circle(self.screen, self.WHITE,
                                    mode_circle_center, 10, 2)
@@ -251,12 +263,27 @@ class RandomBoardTicTacToe:
                 if button == self.selected_game_mode:
                     pygame.draw.circle(
                         self.screen, self.WHITE, mode_circle_center, 5)
+                    
+            # Display radio buttons and hitboxes for ALGORITHM CHOICE
+            for button, option in enumerate(self.algorithm_options):
+                mode_circle_center = (self.width/2-70, option.y_pos)
+                option.hitbox = option.get_hitbox(50, 20, -15)
+                pygame.draw.rect(self.screen, self.RED, option.hitbox, 1) #draws the hitbox
+
+                pygame.draw.circle(self.screen, self.WHITE,
+                                   mode_circle_center, 10, 2)
+
+                # fills in circle for whichever option is selected
+                if button == self.selected_algorithm:
+                    pygame.draw.circle(
+                        self.screen, self.WHITE, mode_circle_center, 5)
 
             # Display radio buttons and hitboxes for Player Symbol
             for button, option in enumerate(self.player_symbol_options):
                 symbol_circle_center = (self.width/2-120, option.y_pos)
                 # creates hitbox around both button and respective text
-                option.hitbox = option.get_hitbox(130, 20, -15)
+                option.hitbox = option.get_hitbox(50, 20, -15)
+                pygame.draw.rect(self.screen, self.RED, option.hitbox, 1) #draws the hitbox
 
                 pygame.draw.circle(self.screen, self.WHITE,  # creates non filled circle
                                    symbol_circle_center, 10, 2)
@@ -282,6 +309,12 @@ class RandomBoardTicTacToe:
                     for i, option in enumerate(self.game_mode_options):
                         if option.hitbox.collidepoint(mouse_pos):
                             self.selected_game_mode = i  # Update the selected game mode
+                            break  # Break after selection to avoid multiple selections
+
+                    # Check for algorithm selection
+                    for i, option in enumerate(self.algorithm_options):
+                        if option.hitbox.collidepoint(mouse_pos):
+                            self.selected_algorithm = i  # Update the selected game mode
                             break  # Break after selection to avoid multiple selections
 
                     # Check for player symbol selection

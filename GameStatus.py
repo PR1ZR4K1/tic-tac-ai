@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import List, LiteralString
+from typing_extensions import List, LiteralString
 from copy import deepcopy
 
 
