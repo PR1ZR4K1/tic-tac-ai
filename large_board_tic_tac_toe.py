@@ -19,16 +19,14 @@ import numpy as np
 from GameStatus import GameStatus
 from Text import Text
 from multiAgents import minimax, negamax
-import sys
-import random
-
-mode = "player_vs_ai"  # default mode for playing the game (player vs AI)
 
 
 class RandomBoardTicTacToe:
-    def __init__(self, size=(600, 600)):
+    def __init__(self, size=(600, 600), ai_depth=3):
 
         self.size = self.width, self.height = size
+        self.ai_depth = ai_depth
+
         # Define some colors
         self.BLACK = (0, 0, 0)
         self.WHITE = (255, 255, 255)
@@ -701,18 +699,17 @@ class RandomBoardTicTacToe:
         THE RETURN VALUES FROM YOUR MINIMAX/NEGAMAX ALGORITHM SHOULD BE THE SCORE, MOVE WHERE SCORE IS AN INTEGER
         NUMBER AND MOVE IS AN X,Y LOCATION RETURNED BY THE AGENT
         """
-        ai_depth = 4
 
         if self.player_x == 0:
             if self.selected_algorithm == 0:
-                value, move = minimax(self.game_state, ai_depth, False)
+                value, move = minimax(self.game_state, self.ai_depth, False)
             else:
-                value, move = negamax(self.game_state, ai_depth, -1)
+                value, move = negamax(self.game_state, self.ai_depth, -1)
         else:
             if self.selected_algorithm == 0:
-                value, move = minimax(self.game_state, ai_depth, True)
+                value, move = minimax(self.game_state, self.ai_depth, True)
             else:
-                value, move = negamax(self.game_state, ai_depth, 1)
+                value, move = negamax(self.game_state, self.ai_depth, 1)
 
         print(f"AI move: {move} with value: {value}")
 
@@ -937,6 +934,10 @@ YOUR FUNCTION PLAY_GAME SHOULD THEN BE CALLED WITH THE RIGHT OPTIONS AS SOON
 AS THE USER STARTS THE GAME
 """
 
+# helper functions
+
+# helper functions
+
 
 def handle_k_return(current_selection, tictactoegame):
     match current_selection:
@@ -989,29 +990,3 @@ def handle_key_down(event, current_selection, tictactoegame):
             handle_k_return(current_selection, tictactoegame)
 
     return current_selection
-
-
-def main():
-    tictactoegame = RandomBoardTicTacToe()
-    pygame.init()
-    current_selection = 0
-
-    while tictactoegame.running:
-        # draw our first screen
-        tictactoegame.main_menu()
-
-        # handle player events
-        for event in pygame.event.get():
-            match event.type:
-                case pygame.MOUSEBUTTONUP:
-                    pos = pygame.mouse.get_pos()
-                    handle_mouse_up(pos, tictactoegame)
-                case pygame.KEYDOWN:
-                    current_selection = handle_key_down(
-                        event, current_selection, tictactoegame)
-                case pygame.QUIT:
-                    tictactoegame.quit()
-
-
-if __name__ == '__main__':
-    main()
