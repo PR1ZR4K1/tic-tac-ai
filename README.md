@@ -44,4 +44,4 @@ Tic Tac AI is packed with features that allow for a customizable gaming experien
 
 - **Making Moves:** Click on any square to make your move. When playing against an AI, you will see an indication of whose turn it is.
 - **Game Objective:** For a 3x3 board, traditional Tic Tac Toe rules apply. For larger boards, the goal is to accumulate the most sets of 3. Each set of 3 earns you one point, with the possibility of earning multiple points for lines containing multiples of 3.
-- **AI Response Time:** Depending on the AI depth and board size, the response time for the AI's move may vary. Consider the time complexity which is on average `O(b^d)` where b is the board size and n is the depth, especially for larger boards and higher AI depth levels. 
+- **AI Response Time:** Depending on the AI depth and board size, the response time for the AI's move may vary. Consider the time complexity which is in the worst case `O(b^d)` where b is the board size and n is the depth, especially for larger boards and higher AI depth levels. 
